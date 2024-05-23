@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.IO chat</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 3rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        background: #e7edee;
+      }
+      #chat {
+        width: 100%;
+        background: #4a4c4b;
+        border: 1px solid wheat;
+        font-size: 3rem;
+        font-family: cursive;
+        font-style: italic;
+        height: 80px;
+        text-align: center;
+        color: beige;
+      }
+      #form {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+      }
+      .input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        padding: 5px;
+        justify-content: space-evenly;
+      }
+      .input:focus {
+        outline: none;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        /* background: #e7edee; */
+        height: fit-content;
+        padding: 10px;
+      }
+      #messages > li {
+        padding: 0.5rem 1rem;
+        margin-bottom: 10px;
+        border: 0.5px solid rgb(0, 0, 0);
+        border-radius: 10px;
+        justify-items: right;
+        width: fit-content;
+      }
+
+      .myMsg {
+        background: #76e88d;
+        color: black;
+        margin-left: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat">SOCKET.IO CHAT</div>
+    <ul id="messages"></ul>
+    <p id="messageWriting"></p>
+    <form id="form" action="">
+      <input
+        class="input"
+        id="input"
+        autocomplete="off"
+        placeholder="Escribir mensaje"
+      />
+      <input
+        class="input"
+        id="inputUser"
+        autocomplete="off"
+        placeholder="Usuario"
+      />
+      <!-- <button>Enviar</button> -->
+      <button type="submit" class="btn btn-success">Enviar</button>
+
+      <!-- <button id="toggle-btn">Desconectar</button> -->
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+      let counter = 0;
+      let coutKey = 0;
+      const socket = io({
+        auth: {
+          serverOffset: 0,
+        },
+        ackTimeout: 30000,
+        retries: 1,
+      });
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const inputUser = document.getElementById("inputUser");
+      const messages = document.getElementById("messages");
+      const messageWriting = document.getElementById("messageWriting");
+      const button = document.querySelector("button");
+      button.disabled = true;
+      // loadUser();
+      inputUser.addEventListener("keyup", (e) => {
+        e.preventDefault();
+        if (inputUser.value == "") {
+          button.disabled = true;
+          // socket.disconnect();
+        } else {
+          button.disabled = false;
+          // socket.connect();
+        }
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (input.value != "" && inputUser.value != "") {
+          const clientOffset = `${socket.id}-${counter++}`;
+          socket.emit(
+            "chat message",
+            input.value,
+            inputUser.value,
+            clientOffset
+          );
+          input.value = "";
+          coutKey = 0;
+        } else {
+          // socket.disconnect();
+        }
+      });
+      input.addEventListener("keyup", (e) => {
+        e.preventDefault();
+        let keycode = e.keyCode;
+        if (coutKey == 0 && input.value && inputUser.value) {
+          socket.emit("writing", inputUser.value);
+          button.disabled = false;
+          coutKey = 1;
+        } else if (input.value == "") {
+          socket.emit("removeUserWriting", inputUser.value);
+          button.disabled = true;
+          coutKey = 0;
+          // socket.emit("removeWriting", inputUser.value);
+        }
+      });
+      socket.on("writing", (userWriting) => {
+        // console.log(msg);
+        console.log(userWriting);
+        if (userWriting.length != 0) {
+          messageWriting.textContent = `${userWriting.join(
+            " "
+          )} esta escribiendo...`;
+          messageWriting.style.color = "green";
+          messageWriting.style.opacity = 1;
+          window.scrollTo(0, document.body.scrollHeight);
+        } else {
+          messageWriting.textContent = "";
+          messageWriting.style.opacity = 0;
+        }
+      });
+
+      socket.on("chat message", (msg, user, serverOffset) => {
+        console.log("Servidor emite toda la data");
+        if (inputUser.value == user) {
+          const item = document.createElement("li");
+          item.className += "myMsg";
+          item.textContent = `${msg}`;
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+          socket.auth.serverOffset = serverOffset;
+        } else {
+          const item = document.createElement("li");
+          item.textContent = `${user}: ${msg}`;
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+          socket.auth.serverOffset = serverOffset;
+        }
+      });
+
+      // async function loadUser() {
+      //   if (inputUser.value == "") {
+      //     await Swal.fire({
+      //       title: "Ingresa nombre de usuario",
+      //       input: "text",
+      //       inputAttributes: {
+      //         autocapitalize: "off",
+      //       },
+      //       showCancelButton: true,
+      //       confirmButtonText: "Ingresar",
+      //       showLoaderOnConfirm: true,
+      //       preConfirm: async (login) => {
+      //         if (login != "") {
+      //           inputUser.value = await `${login}`;
+      //         } else {
+      //           Swal.fire({
+      //             title:
+      //               "No ha ingresado su usuario, no se puede cargar el chat",
+      //             icon: "warning",
+      //             showCloseButton: true,
+      //           });
+      //         }
+      //       },
+      //     });
+
+      //     data();
+      //   }
+      // socket.on("chat message", (msg, user, serverOffset) => {
+      //   console.log("Servidor emite toda la data");
+      //   let listMessage = document.querySelector("ul");
+      //   let writing = document.querySelector("p");
+      //   if (writing != null) {
+      //     const REMOVE_WRITING = listMessage.removeChild(writing);
+      //     console.log(listMessage);
+      //   }
+
+      //   if (inputUser.value == user) {
+      //     const item = document.createElement("li");
+      //     item.className += "myMsg";
+      //     item.textContent = `${msg}`;
+      //     messages.appendChild(item);
+      //     window.scrollTo(0, document.body.scrollHeight);
+      //     socket.auth.serverOffset = serverOffset;
+      //   } else {
+      //     const item = document.createElement("li");
+      //     item.textContent = `${user}: ${msg}`;
+      //     messages.appendChild(item);
+      //     window.scrollTo(0, document.body.scrollHeight);
+      //     socket.auth.serverOffset = serverOffset;
+      //   }
+      // });
+      // console.log(
+      //   `Encontro que el inputUser ya no esta vacio ${inputUser.value}`
+      // );
+      // }
+      // function data() {
+      //   console.log("data");
+      //   socket.on("chat message", (msg, user, serverOffset) => {
+      //     console.log("Servidor emite toda la data");
+      //     let listMessage = document.querySelector("ul");
+      //     let writing = document.querySelector("p");
+      //     if (writing != null) {
+      //       const REMOVE_WRITING = listMessage.removeChild(writing);
+      //       console.log(listMessage);
+      //     }
+
+      //     if (inputUser.value == user) {
+      //       const item = document.createElement("li");
+      //       item.className += "myMsg";
+      //       item.textContent = `${msg}`;
+      //       messages.appendChild(item);
+      //       window.scrollTo(0, document.body.scrollHeight);
+      //       socket.auth.serverOffset = serverOffset;
+      //     } else {
+      //       const item = document.createElement("li");
+      //       item.textContent = `${user}: ${msg}`;
+      //       messages.appendChild(item);
+      //       window.scrollTo(0, document.body.scrollHeight);
+      //       socket.auth.serverOffset = serverOffset;
+      //     }
+      //   });
+      // }
+      //  socket.emit("writing", inputUser.value);
+    </script>
+  </body>
+</html>
