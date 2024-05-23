@@ -123,7 +123,6 @@
       const messageWriting = document.getElementById("messageWriting");
       const button = document.querySelector("button");
       button.disabled = true;
-      // loadUser();
       inputUser.addEventListener("keyup", (e) => {
         e.preventDefault();
         if (inputUser.value == "") {
@@ -162,12 +161,11 @@
           socket.emit("removeUserWriting", inputUser.value);
           button.disabled = true;
           coutKey = 0;
-          // socket.emit("removeWriting", inputUser.value);
         }
       });
       socket.on("writing", (userWriting) => {
         // console.log(msg);
-        console.log(userWriting);
+        console.log(`Respuesta socket canal writing ${userWriting}`);
         if (userWriting.length != 0) {
           messageWriting.textContent = `${userWriting.join(
             " "
@@ -198,90 +196,6 @@
           socket.auth.serverOffset = serverOffset;
         }
       });
-
-      // async function loadUser() {
-      //   if (inputUser.value == "") {
-      //     await Swal.fire({
-      //       title: "Ingresa nombre de usuario",
-      //       input: "text",
-      //       inputAttributes: {
-      //         autocapitalize: "off",
-      //       },
-      //       showCancelButton: true,
-      //       confirmButtonText: "Ingresar",
-      //       showLoaderOnConfirm: true,
-      //       preConfirm: async (login) => {
-      //         if (login != "") {
-      //           inputUser.value = await `${login}`;
-      //         } else {
-      //           Swal.fire({
-      //             title:
-      //               "No ha ingresado su usuario, no se puede cargar el chat",
-      //             icon: "warning",
-      //             showCloseButton: true,
-      //           });
-      //         }
-      //       },
-      //     });
-
-      //     data();
-      //   }
-      // socket.on("chat message", (msg, user, serverOffset) => {
-      //   console.log("Servidor emite toda la data");
-      //   let listMessage = document.querySelector("ul");
-      //   let writing = document.querySelector("p");
-      //   if (writing != null) {
-      //     const REMOVE_WRITING = listMessage.removeChild(writing);
-      //     console.log(listMessage);
-      //   }
-
-      //   if (inputUser.value == user) {
-      //     const item = document.createElement("li");
-      //     item.className += "myMsg";
-      //     item.textContent = `${msg}`;
-      //     messages.appendChild(item);
-      //     window.scrollTo(0, document.body.scrollHeight);
-      //     socket.auth.serverOffset = serverOffset;
-      //   } else {
-      //     const item = document.createElement("li");
-      //     item.textContent = `${user}: ${msg}`;
-      //     messages.appendChild(item);
-      //     window.scrollTo(0, document.body.scrollHeight);
-      //     socket.auth.serverOffset = serverOffset;
-      //   }
-      // });
-      // console.log(
-      //   `Encontro que el inputUser ya no esta vacio ${inputUser.value}`
-      // );
-      // }
-      // function data() {
-      //   console.log("data");
-      //   socket.on("chat message", (msg, user, serverOffset) => {
-      //     console.log("Servidor emite toda la data");
-      //     let listMessage = document.querySelector("ul");
-      //     let writing = document.querySelector("p");
-      //     if (writing != null) {
-      //       const REMOVE_WRITING = listMessage.removeChild(writing);
-      //       console.log(listMessage);
-      //     }
-
-      //     if (inputUser.value == user) {
-      //       const item = document.createElement("li");
-      //       item.className += "myMsg";
-      //       item.textContent = `${msg}`;
-      //       messages.appendChild(item);
-      //       window.scrollTo(0, document.body.scrollHeight);
-      //       socket.auth.serverOffset = serverOffset;
-      //     } else {
-      //       const item = document.createElement("li");
-      //       item.textContent = `${user}: ${msg}`;
-      //       messages.appendChild(item);
-      //       window.scrollTo(0, document.body.scrollHeight);
-      //       socket.auth.serverOffset = serverOffset;
-      //     }
-      //   });
-      // }
-      //  socket.emit("writing", inputUser.value);
     </script>
   </body>
 </html>
