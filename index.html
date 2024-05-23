@@ -127,10 +127,10 @@
         e.preventDefault();
         if (inputUser.value == "") {
           button.disabled = true;
-          // socket.disconnect();
-        } else {
+          socket.disconnect();
+        } else if (inputUser.value != "") {
           button.disabled = false;
-          // socket.connect();
+          socket.connect();
         }
       });
 
@@ -146,8 +146,6 @@
           );
           input.value = "";
           coutKey = 0;
-        } else {
-          // socket.disconnect();
         }
       });
       input.addEventListener("keyup", (e) => {
