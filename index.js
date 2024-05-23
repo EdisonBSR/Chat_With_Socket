@@ -56,6 +56,7 @@ if (cluster.isPrimary) {
         userWriting.splice(position, 1);
         console.log(userWriting);
         io.emit("writing", userWriting);
+        socket.emit("users", userOnLine);
         callback();
       }
       let result;
@@ -102,10 +103,18 @@ if (cluster.isPrimary) {
       socket.broadcast.emit("writing", userWriting);
       callback();
     });
-    socket.on("removeUserWriting", (user, callback) => {
+    socket.on("removeUserWriting", async (user, callback) => {
       if (userWriting.includes(user)) {
         let position = userWriting.indexOf(user);
         userWriting.splice(position, 1);
+      }
+      callback();
+    });
+
+    socket.on("users", async (user, callback) => {
+      if (!userOnLine.includes(user)) {
+        userOnLine.push(user);
+        console.log(`Usuarios en linea: ${userOnLine}`);
       }
       callback();
     });

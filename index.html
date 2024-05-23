@@ -78,27 +78,42 @@
     </style>
   </head>
   <body>
-    <div id="chat">SOCKET.IO CHAT</div>
-    <ul id="messages"></ul>
-    <p id="messageWriting"></p>
-    <form id="form" action="">
-      <input
-        class="input"
-        id="input"
-        autocomplete="off"
-        placeholder="Escribir mensaje"
-      />
-      <input
-        class="input"
-        id="inputUser"
-        autocomplete="off"
-        placeholder="Usuario"
-      />
-      <!-- <button>Enviar</button> -->
-      <button type="submit" class="btn btn-success">Enviar</button>
+    <div class="row">
+      <div class="col-6 col-md-4">
+        <p>USUARIOSS</p>
+        <ul id="usersOnLines" class="list-group"></ul>
+      </div>
+      <div class="col-md-8">
+        <div id="chat">SOCKET.IO CHAT</div>
+        <div
+          data-bs-spy="scroll"
+          data-bs-target="#list-example"
+          data-bs-smooth-scroll="true"
+          class="scrollspy-example"
+          tabindex="0"
+        >
+          <ul id="messages"></ul>
+          <p id="messageWriting"></p>
+          <form id="form" action="">
+            <input
+              class="input"
+              id="input"
+              autocomplete="off"
+              placeholder="Escribir mensaje"
+            />
+            <input
+              class="input"
+              id="inputUser"
+              autocomplete="off"
+              placeholder="Usuario"
+              autofocus
+            />
+            <button type="submit" class="btn btn-success">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </div>
 
-      <!-- <button id="toggle-btn">Desconectar</button> -->
-    </form>
     <script src="/socket.io/socket.io.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
@@ -122,19 +137,23 @@
       const messages = document.getElementById("messages");
       const messageWriting = document.getElementById("messageWriting");
       const button = document.querySelector("button");
+      const usersOnLines = document.getElementById("usersOnLines");
       button.disabled = true;
       console.log(inputUser.value == "");
       if (inputUser.value == "") {
         button.disabled = true;
+        input.disabled = true;
         socket.disconnect();
       }
       inputUser.addEventListener("keyup", (e) => {
         e.preventDefault();
         if (inputUser.value == "") {
           button.disabled = true;
+          input.disabled = true;
           socket.disconnect();
         } else if (inputUser.value != "") {
           button.disabled = false;
+          input.disabled = false;
           socket.connect();
         }
       });
@@ -149,6 +168,7 @@
             inputUser.value,
             clientOffset
           );
+          socket.emit("users", inputUser.value);
           input.value = "";
           coutKey = 0;
         }
@@ -166,16 +186,39 @@
           coutKey = 0;
         }
       });
+      socket.on("users", (users) => {
+        console.log(`Usarios conectados recibido: ${users}`);
+        users.forEach((user) => {
+          console.log(`usuario: ${user}`);
+          const USER = document.createElement("li");
+          USER.className += "userConnect";
+          USER.textContent = `${user}`;
+          usersOnLines.appendChild(USER);
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      });
       socket.on("writing", (userWriting) => {
         // console.log(msg);
+        let newUserWriting = [];
+        userWriting.forEach((user) => {
+          if (inputUser.value != user) {
+            newUserWriting.push(user);
+          }
+        });
         console.log(`Respuesta socket canal writing ${userWriting}`);
-        if (userWriting.length != 0) {
-          messageWriting.textContent = `${userWriting.join(
+        console.log(
+          `Respuesta socket canal writing quitando el inputUser ${newUserWriting}`
+        );
+        if (newUserWriting.length != 0) {
+          messageWriting.textContent = `${newUserWriting.join(
             " "
           )} esta escribiendo...`;
           messageWriting.style.color = "green";
           messageWriting.style.opacity = 1;
           window.scrollTo(0, document.body.scrollHeight);
+        } else if (newUserWriting[0] == inputUser.value) {
+          messageWriting.textContent = "";
+          messageWriting.style.opacity = 0;
         } else {
           messageWriting.textContent = "";
           messageWriting.style.opacity = 0;
