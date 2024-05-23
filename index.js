@@ -107,6 +107,7 @@ if (cluster.isPrimary) {
         let position = userWriting.indexOf(user);
         userWriting.splice(position, 1);
       }
+      callback();
     });
     // socket.on("removeWriting", async (user, callback) => {
     //   console.log(userWriting.includes(user));

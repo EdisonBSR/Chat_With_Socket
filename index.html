@@ -123,6 +123,11 @@
       const messageWriting = document.getElementById("messageWriting");
       const button = document.querySelector("button");
       button.disabled = true;
+      console.log(inputUser.value == "");
+      if (inputUser.value == "") {
+        button.disabled = true;
+        socket.disconnect();
+      }
       inputUser.addEventListener("keyup", (e) => {
         e.preventDefault();
         if (inputUser.value == "") {
