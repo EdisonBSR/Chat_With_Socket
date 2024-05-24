@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Socket.IO chat</title>
+    <link rel="stylesheet" href="resetStyle.css" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -13,14 +14,13 @@
     <style>
       body {
         margin: 0;
-        padding-bottom: 3rem;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           Helvetica, Arial, sans-serif;
         background: #e7edee;
       }
       #chat {
         width: 100%;
-        background: #4a4c4b;
+        background: #6a6d6ca8;
         border: 1px solid wheat;
         font-size: 3rem;
         font-family: cursive;
@@ -28,14 +28,15 @@
         height: 80px;
         text-align: center;
         color: beige;
+        border-radius: 0 0 10px 10px;
       }
       #form {
         background: rgba(0, 0, 0, 0.15);
         padding: 0.25rem;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        /* position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0; */
         display: flex;
         height: 3rem;
         box-sizing: border-box;
@@ -53,7 +54,8 @@
         outline: none;
       }
 
-      #messages {
+      #messages,
+      #usersOnLines {
         list-style-type: none;
         margin: 0;
         padding: 0;
@@ -65,22 +67,63 @@
         padding: 0.5rem 1rem;
         margin-bottom: 10px;
         border: 0.5px solid rgb(0, 0, 0);
-        border-radius: 10px;
+        border-radius: 3px 10px 10px 10px;
         justify-items: right;
         width: fit-content;
+        background: #47454582;
+        color: white;
+        box-shadow: 3px 2px 5px 0px rgb(100 99 99 / 52%);
       }
 
-      .myMsg {
+      #messages > .myMsg {
         background: #76e88d;
         color: black;
         margin-left: auto;
+      }
+      #usersOnLines > li {
+        padding: 0.5rem 1rem;
+        margin-bottom: 10px;
+        background: #80f780;
+        border-radius: 10px;
+        box-shadow: 3px 2px 5px 0 #22e96f91;
+        width: 70%;
+        margin-left: 10px;
+      }
+      .userConnect {
+        color: black;
+        text-align: left;
+        height: 100%;
+      }
+      /* .userConnect:hover {
+        background: #27ef55;
+        border: 0.5px solid rgb(122, 242, 194);
+        border-radius: 10px;
+      } */
+      .list-user {
+        background: #e3f1fc;
+        box-shadow: 5px 1px 34px -11px rgba(105, 135, 132, 1);
+      }
+      .list-user > p {
+        margin-top: 10px;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: #495057;
+        font-size: x-large;
+        font-family: math;
+      }
+      .row {
+        --bs-gutter-x: 0;
+      }
+      .row > * {
+        padding-right: 0;
+        padding-left: 0;
       }
     </style>
   </head>
   <body>
     <div class="row">
-      <div class="col-6 col-md-4">
-        <p>USUARIOSS</p>
+      <div class="col-6 col-md-4 list-user">
+        <p>Usuarios</p>
         <ul id="usersOnLines" class="list-group"></ul>
       </div>
       <div class="col-md-8">
@@ -124,6 +167,8 @@
     <script>
       let counter = 0;
       let coutKey = 0;
+      let userLine = [];
+      let userOff = [];
       const socket = io({
         auth: {
           serverOffset: 0,
@@ -139,7 +184,9 @@
       const button = document.querySelector("button");
       const usersOnLines = document.getElementById("usersOnLines");
       button.disabled = true;
-      console.log(inputUser.value == "");
+      let saveInputUser = "";
+      // console.log(inputUser.value == "");
+
       if (inputUser.value == "") {
         button.disabled = true;
         input.disabled = true;
@@ -150,17 +197,23 @@
         if (inputUser.value == "") {
           button.disabled = true;
           input.disabled = true;
+          if (saveInputUser != "") {
+            socket.emit("userOffLine", saveInputUser);
+          }
+          saveInputUser = "";
           socket.disconnect();
         } else if (inputUser.value != "") {
           button.disabled = false;
           input.disabled = false;
           socket.connect();
+          socket.emit("users", inputUser.value);
         }
       });
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         if (input.value != "" && inputUser.value != "") {
+          saveInputUser = inputUser.value;
           const clientOffset = `${socket.id}-${counter++}`;
           socket.emit(
             "chat message",
@@ -168,9 +221,9 @@
             inputUser.value,
             clientOffset
           );
-          socket.emit("users", inputUser.value);
           input.value = "";
           coutKey = 0;
+          socket.emit("users", inputUser.value);
         }
       });
       input.addEventListener("keyup", (e) => {
@@ -186,12 +239,48 @@
           coutKey = 0;
         }
       });
-      socket.on("users", (users) => {
-        console.log(`Usarios conectados recibido: ${users}`);
-        users.forEach((user) => {
-          console.log(`usuario: ${user}`);
+      socket.on("users", (userOnLine) => {
+        console.log(`Usarios conectados recibido: ${userOnLine}`);
+        console.log(`Registro de concectados: ${userLine} `);
+        if (userLine[0] == null) {
+          console.log("Ingreso a null de userLine[0].");
+          userOnLine.forEach((user) => {
+            userLine.push(user);
+            console.log(` dentro de null usuario: ${user}`);
+            const USER = document.createElement("li");
+            USER.className += "userConnect";
+            USER.textContent = `${user}`;
+            usersOnLines.appendChild(USER);
+            window.scrollTo(0, document.body.scrollHeight);
+          });
+        } else {
+          userOnLine.forEach((user) => {
+            if (!userLine.includes(user)) {
+              console.log(` dentro de else del null usuario: ${user}`);
+              userLine.push(user);
+              const USER = document.createElement("li");
+              USER.className += "userConnect";
+              USER.textContent = `${user}`;
+              usersOnLines.appendChild(USER);
+              window.scrollTo(0, document.body.scrollHeight);
+            }
+          });
+        }
+
+        // userOnLine.forEach((user) => {
+        //   console.log(`usuario: ${user}`);
+        //   const USER = document.createElement("li");
+        //   USER.className += "userConnect";
+        //   USER.textContent = `${user}`;
+        //   usersOnLines.appendChild(USER);
+        //   window.scrollTo(0, document.body.scrollHeight);
+        // });
+      });
+      socket.on("userOffLine", (userOffLine) => {
+        console.log(`Usuarios desconectados recibidos ${userOffLine}`);
+        userOffLine.forEach((user) => {
           const USER = document.createElement("li");
-          USER.className += "userConnect";
+          USER.className += "li-userOff";
           USER.textContent = `${user}`;
           usersOnLines.appendChild(USER);
           window.scrollTo(0, document.body.scrollHeight);
@@ -205,10 +294,10 @@
             newUserWriting.push(user);
           }
         });
-        console.log(`Respuesta socket canal writing ${userWriting}`);
-        console.log(
-          `Respuesta socket canal writing quitando el inputUser ${newUserWriting}`
-        );
+        // console.log(`Respuesta socket canal writing ${userWriting}`);
+        // console.log(
+        //   `Respuesta socket canal writing quitando el inputUser ${newUserWriting}`
+        // );
         if (newUserWriting.length != 0) {
           messageWriting.textContent = `${newUserWriting.join(
             " "
@@ -216,7 +305,7 @@
           messageWriting.style.color = "green";
           messageWriting.style.opacity = 1;
           window.scrollTo(0, document.body.scrollHeight);
-        } else if (newUserWriting[0] == inputUser.value) {
+        } else if (newUserWriting.includes(inputUser.value)) {
           messageWriting.textContent = "";
           messageWriting.style.opacity = 0;
         } else {
@@ -226,7 +315,7 @@
       });
 
       socket.on("chat message", (msg, user, serverOffset) => {
-        console.log("Servidor emite toda la data");
+        // console.log("Servidor emite toda la data");
         if (inputUser.value == user) {
           const item = document.createElement("li");
           item.className += "myMsg";

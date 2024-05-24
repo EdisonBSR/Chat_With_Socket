@@ -56,7 +56,6 @@ if (cluster.isPrimary) {
         userWriting.splice(position, 1);
         console.log(userWriting);
         io.emit("writing", userWriting);
-        socket.emit("users", userOnLine);
         callback();
       }
       let result;
@@ -93,6 +92,8 @@ if (cluster.isPrimary) {
             socket.emit("chat message", row.content, row.user, row.id);
           }
         );
+        console.log("Emito los usuarios conectados");
+        socket.emit("users", userOnLine);
       } catch (e) {
         // something went wrong
       }
@@ -101,13 +102,7 @@ if (cluster.isPrimary) {
       userWriting.push(user);
       console.log(userWriting);
       socket.broadcast.emit("writing", userWriting);
-      callback();
-    });
-    socket.on("removeUserWriting", async (user, callback) => {
-      if (userWriting.includes(user)) {
-        let position = userWriting.indexOf(user);
-        userWriting.splice(position, 1);
-      }
+      socket.emit("users", userOnLine);
       callback();
     });
 
@@ -116,18 +111,30 @@ if (cluster.isPrimary) {
         userOnLine.push(user);
         console.log(`Usuarios en linea: ${userOnLine}`);
       }
+      socket.emit("users", userOnLine);
       callback();
     });
-    // socket.on("removeWriting", async (user, callback) => {
-    //   console.log(userWriting.includes(user));
-    //   if (userWriting.includes(user)) {
-    //     let position = userWriting.indexOf(user);
-    //     userWriting.splice(position, 1);
-    //     console.log(userWriting);
-    //     socket.broadcast.emit("writing", userWriting);
-    //     callback();
-    //   }
-    // });
+    socket.on("userOffLine", async (user, callback) => {
+      if (userOnLine.includes(user)) {
+        let position = userOnLine.indexOf(user);
+        let userDisconnect = userOnLine.splice(position, 1);
+        userOffLine.push(userDisconnect);
+      }
+      // socket.emit("users", userOnLine);
+      console.log(`Usuarios desconectados ${userOffLine}`);
+      socket.emit("userOffLine", userOffLine);
+      callback();
+    });
+    socket.on("removeUserWriting", async (user, callback) => {
+      // console.log(userWriting.includes(user));
+      if (userWriting.includes(user)) {
+        let position = userWriting.indexOf(user);
+        userWriting.splice(position, 1);
+        console.log(userWriting);
+        socket.broadcast.emit("writing", userWriting);
+        callback();
+      }
+    });
 
     //Fin socket
   });
